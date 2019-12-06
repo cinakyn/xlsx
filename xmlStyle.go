@@ -261,7 +261,10 @@ func (styles *xlsxStyleSheet) argbValue(color xlsxColor) string {
 		return styles.theme.themeColor(int64(*color.Theme), color.Tint)
 	}
 	if color.Indexed != nil && styles.Colors != nil {
-		return styles.Colors.indexedColor(*color.Indexed, color.Tint)
+		c, err := styles.Colors.indexedColor(*color.Indexed, color.Tint)
+		if err == nil {
+			return c
+		}
 	}
 	return color.RGB
 }
@@ -1050,6 +1053,10 @@ type xlsxColors struct {
 	MruColors     []xlsxColor    `xml:"mruColors>color,omitempty"`
 }
 
-func (c *xlsxColors) indexedColor(index int, tint float64) string {
-	return c.IndexedColors[index-1].Rgb
+func (c *xlsxColors) indexedColor(index int, tint float64) (string, error) {
+	if len(c.IndexedColors) > index {
+		return c.IndexedColors[index-1].Rgb, nil
+	} else {
+		return "", fmt.Errorf("invalid color index")
+	}
 }
